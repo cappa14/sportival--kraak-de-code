@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sportival - Festival Thema</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #FF914D, #FF5722); /* Oranjekleurige gradient */
+            color: #ffffff;
+            overflow: hidden; /* Voorkomt scrollen tijdens kleurverandering */
+            transition: background-color 0.3s ease; /* Soepele achtergrondkleurovergang */
+        }
+        .container {
+            position: relative;
+            background-color: rgba(0, 0, 0, 0.9); /* Donkere achtergrond voor de container */
+            padding: 50px; /* Vergroot de padding voor een grotere container */
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+            text-align: center;
+            max-width: 800px; /* Vergroot de container breedte */
+            width: 90%;
+            transition: background-color 0.3s ease; /* Soepele overgang van achtergrondkleur */
+        }
+        .header {
+            font-size: 48px;
+            font-family: 'Pacifico', cursive; /* Mooie, feestelijke letters */
+            color: #FFB74D; /* Gedempte kleur voor de naam */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+            margin-bottom: 20px;
+        }
+        .class-buttons {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .class-button {
+            background-color: #FFB74D; /* Gedempte festival kleur */
+            color: #ffffff;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 10px;
+            width: 120px; /* Verbreed de knoppen */
+            transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .class-button:hover {
+            background-color: #FFA726; /* Donkerder bij hover */
+        }
+        .class-button.selected {
+            background-color: #FB8C00; /* Nog donkerder voor geselecteerde knop */
+            transform: scale(1.1); /* Vergroot de geselecteerde knop */
+            box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.6); /* Toevoegen van een schaduw voor betere zichtbaarheid */
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 20px;
+            color: #ffffff;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            autocomplete: off; /* Voorkom autocomplete van browser */
+        }
+        button {
+            background-color: #FFB74D; /* Gedempte festival kleur */
+            color: #ffffff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #FFA726; /* Donkerder bij hover */
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            transition: opacity 0.5s ease;
+        }
+        .correct {
+            background-color: #66BB6A; /* Gedempte groene achtergrond voor goed */
+            color: #ffffff;
+        }
+        .incorrect {
+            background-color: #EF5350; /* Gedempte rode achtergrond voor fout */
+            color: #ffffff;
+        }
+        .hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+    </style>
+    <!-- Voeg Google Font toe voor het lettertype -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">Sportival</div>
+        <div id="result" class="hidden"></div>
+        <div class="class-buttons">
+            <div>
+                <button class="class-button" data-class="A">Klas A</button>
+                <button class="class-button" data-class="B">Klas B</button>
+                <button class="class-button" data-class="C">Klas C</button>
+                <button class="class-button" data-class="D">Klas D</button>
+            </div>
+            <div>
+                <button class="class-button" data-class="E">Klas E</button>
+                <button class="class-button" data-class="F">Klas F</button>
+                <button class="class-button" data-class="G">Klas G</button>
+            </div>
+        </div>
+        <form id="codeForm">
+            <label for="code">Voer de code in:</label>
+            <input type="text" id="code" maxlength="4" autocomplete="off" required>
+            <button type="submit">Verstuur</button>
+        </form>
+    </div>
+
+    <!-- Geluidseffecten -->
+    <audio id="correctSound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+    <audio id="incorrectSound" src="https://www.soundjay.com/button/beep-08.wav" preload="auto"></audio>
+
+    <script>
+        // Codes voor elke klas
+        const codes = {
+            "A": "4817",
+            "B": "1526",
+            "C": "9108",
+            "D": "6941",
+            "E": "7450",
+            "F": "5890",
+            "G": "2538"
+        };
+
+        let selectedClass = '';
+
+        // Klas selecteren via knoppen
+        document.querySelectorAll('.class-button').forEach(button => {
+            button.addEventListener('click', function() {
+                selectedClass = this.getAttribute('data-class');
+                document.querySelectorAll('.class-button').forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('code').classList.remove('hidden');
+                document.querySelector('button[type="submit"]').classList.remove('hidden');
+                document.querySelector('.container').style.backgroundColor = 'rgba(0, 0, 0, 0.9)'; // Herstel de container achtergrondkleur
+            });
+        });
+
+        document.getElementById('codeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const inputCode = document.getElementById('code').value;
+            const resultDiv = document.getElementById('result');
+            const body = document.body;
+            const container = document.querySelector('.container');
+            const correctSound = document.getElementById('correctSound');
+            const incorrectSound = document.getElementById('incorrectSound');
+
+            if (!selectedClass) {
+                resultDiv.textContent = "Selecteer eerst je klas.";
+                resultDiv.className = 'incorrect';
+                body.style.backgroundColor = '#EF5350'; // Gedempte rode achtergrond
+                container.style.backgroundColor = '#EF5350'; // Gedempte rode achtergrond container
+                incorrectSound.play(); // Speel fout geluid
+                setTimeout(() => {
+                    body.style.backgroundColor = ''; // Terug naar standaard
+                    container.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'; // Herstel container achtergrondkleur
+                    resultDiv.classList.add('hidden'); // Verberg resultaat na kleurverandering
+                }, 3000);
+                return;
+            }
+
+            const correctCode = codes[selectedClass];
+            const codeIsValid = inputCode === correctCode;
+
+            if (codeIsValid) {
+                resultDiv.textContent = "Goed gedaan! Je mag nu de kist openmaken!";
+                resultDiv.className = 'correct';
+                body.style.backgroundColor = '#66BB6A'; // Gedempte groene achtergrond
+                container.style.backgroundColor = '#66BB6A'; // Gedempte groene achtergrond container
+                correctSound.play(); // Speel correct geluid
+            } else {
+                resultDiv.textContent = "Fout, probeer het opnieuw.";
+                resultDiv.className = 'incorrect';
+                body.style.backgroundColor = '#EF5350'; // Gedempte rode achtergrond
+                container.style.backgroundColor = '#EF5350'; // Gedempte rode achtergrond container
+                incorrectSound.play(); // Speel fout geluid
+            }
+
+            // Verwijder boodschap, reset achtergrondkleur na 3 seconden
+            setTimeout(() => {
+                resultDiv.classList.add('hidden'); // Verberg resultaat
+                body.style.backgroundColor = ''; // Terug naar standaard
+                container.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'; // Herstel container achtergrondkleur
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
